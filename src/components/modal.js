@@ -15,6 +15,6 @@ function closeByEsc(evt) {
       closePopup(openedPopup);
     }
   }
-};
+}
 
-export {openPopup, closePopup, closeByEsc};
+export {openPopup, closePopup};

@@ -1,0 +1,5 @@
+.popup__content_content_delete-button {
+  display: flex;
+  flex-direction: column;
+  row-gap: 19px;
+}
