@@ -1,5 +1,5 @@
-import { config, deleteCardFromServer } from "../scripts/api";
-import { openPopup, closePopup } from "./modal";
+import { config, getResponseData } from "../scripts/api";
+import { openDeleteConfirmationPopup } from "../scripts";
 
 function addCard(cardContent, currentUserId, openImagePopup, handleLikeClick) {
   const card = document.querySelector('#card-template').content.querySelector('.card').cloneNode(true);
@@ -44,12 +44,7 @@ function deleteCard(cardId, cardElement = null) {
     method: 'DELETE',
     headers: config.headers
   })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`Ошибка: ${res.status}`);
-      }
-      return res.json();
-    })
+    .then(getResponseData)
     .then(() => {
       if (cardElement) {
         cardElement.remove();
@@ -75,12 +70,7 @@ const likeCard = (cardId) => {
     method: 'PUT',
     headers: config.headers
   })
-  .then(res => {
-    if (res.ok) {
-      return res.json();
-    }
-    return Promise.reject(`Ошибка: ${res.status}`);
-  });
+  .then(getResponseData);
 };
 
 const unlikeCard = (cardId) => {
@@ -88,12 +78,7 @@ const unlikeCard = (cardId) => {
     method: 'DELETE',
     headers: config.headers
   })
-  .then(res => {
-    if (res.ok) {
-      return res.json();
-    }
-    return Promise.reject(`Ошибка: ${res.status}`);
-  });
+  .then(getResponseData);
 };
 
 function handleLikeClick(cardId, likeButton, likeCounter) {
@@ -117,51 +102,4 @@ function handleLikeClick(cardId, likeButton, likeCounter) {
     });
 }
 
-let currentCardToDelete = null;
-let currentCardIdToDelete = null;
-
-function openDeleteConfirmationPopup(cardElement, cardId) {
-  currentCardToDelete = cardElement;
-  currentCardIdToDelete = cardId;
-  openPopup(deletePopup);
-}
-function closeDeleteConfirmationPopup() {
-  currentCardToDelete = null;
-  currentCardIdToDelete = null;
-  closePopup(deletePopup);
-}
-function handleDeleteConfirm() {
-  if (!currentCardToDelete || !currentCardIdToDelete) return;
-  const deleteConfirmButton = document.querySelector('.popup_type_delete-card .popup__button');
-  deleteConfirmButton.textContent = 'Удаление...';
-  deleteConfirmButton.disabled = true;
-
-  deleteCardFromServer(currentCardIdToDelete)
-    .then(() => {
-      currentCardToDelete.remove();
-      closePopup(deletePopup);
-    })
-    .catch(err => {
-      console.error('Ошибка удаления:', err);
-      alert('Не удалось удалить карточку');
-    })
-    .finally(() => {
-      deleteConfirmButton.textContent = 'Да';
-      deleteConfirmButton.disabled = false;
-    });
-}
-
-const deletePopup = document.querySelector('.popup_type_delete-card');
-  if (deletePopup) {
-    deletePopup.querySelector('.popup__button').addEventListener('click', handleDeleteConfirm);
-    deletePopup.querySelector('.popup__close').addEventListener('click', () => {
-      closePopup(deletePopup); // Используем closePopup напрямую
-    });
-    deletePopup.addEventListener('click', (evt) => {
-      if (evt.target === deletePopup) {
-        closeDeleteConfirmationPopup();
-      }
-    });
-  };
-
-export{addCard, deleteCard, handleLikeClick, likeCard, unlikeCard, openDeleteConfirmationPopup, closeDeleteConfirmationPopup, handleDeleteConfirm};
+export{addCard, deleteCard, handleLikeClick, likeCard, unlikeCard};
