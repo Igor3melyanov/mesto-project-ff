@@ -1,7 +1,6 @@
-import { config, getResponseData } from "../scripts/api";
-import { openDeleteConfirmationPopup } from "../scripts";
+import { likeCard, unlikeCard, deleteCardFromServer } from "../scripts/api";
 
-function addCard(cardContent, currentUserId, openImagePopup, handleLikeClick) {
+function addCard(cardContent, currentUserId, openImagePopup, handleLikeClick, openDeleteConfirmationPopup) {
   const card = document.querySelector('#card-template').content.querySelector('.card').cloneNode(true);
   const cardImage = card.querySelector('.card__image');
   const cardTitle = card.querySelector('.card__title');
@@ -15,14 +14,12 @@ function addCard(cardContent, currentUserId, openImagePopup, handleLikeClick) {
   cardImage.src = cardContent.link;
   cardImage.alt = cardContent.name;
   cardTitle.textContent = cardContent.name;
-  if (likeCounter) {
-    likeCounter.textContent = cardContent.likes?.length || '0';
-  }
-  const isLiked = cardContent.likes?.some(like => like._id === currentUserId) || false;
-  if (isLiked) {
+  likeCounter.textContent = cardContent.likes?.length || '0';
+  if (cardContent.likes?.some(like => like._id === currentUserId)) {
     likeButton.classList.add('card__like-button_is-active');
   }
   if (cardContent.owner._id === currentUserId) {
+    deleteButton.style.display = 'block';
     deleteButton.addEventListener('click', () => {
       openDeleteConfirmationPopup(card, cardContent._id);
     });
@@ -40,11 +37,7 @@ function addCard(cardContent, currentUserId, openImagePopup, handleLikeClick) {
 }
 
 function deleteCard(cardId, cardElement = null) {
-  return fetch(`${config.baseUrl}/cards/${cardId}`, {
-    method: 'DELETE',
-    headers: config.headers
-  })
-    .then(getResponseData)
+  deleteCardFromServer(cardId)
     .then(() => {
       if (cardElement) {
         cardElement.remove();
@@ -64,22 +57,6 @@ function deleteCard(cardId, cardElement = null) {
       throw error;
     });
 }
-
-const likeCard = (cardId) => {
-  return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
-    method: 'PUT',
-    headers: config.headers
-  })
-  .then(getResponseData);
-};
-
-const unlikeCard = (cardId) => {
-  return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
-    method: 'DELETE',
-    headers: config.headers
-  })
-  .then(getResponseData);
-};
 
 function handleLikeClick(cardId, likeButton, likeCounter) {
   if (!likeButton || !likeButton.classList) {
@@ -102,4 +79,4 @@ function handleLikeClick(cardId, likeButton, likeCounter) {
     });
 }
 
-export{addCard, deleteCard, handleLikeClick, likeCard, unlikeCard};
+export{addCard, deleteCard, handleLikeClick};

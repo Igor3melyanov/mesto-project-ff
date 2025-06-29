@@ -2,7 +2,7 @@ import '../pages/index.css';
 import {openPopup, closePopup} from '../components/modal.js';
 import {addCard, deleteCard, handleLikeClick} from '../components/card.js';
 import {enableValidation, clearValidation} from './validation.js';
-import {getInitialCards, getUserInfo, patchUserInfo, postNewCard, patchUserAvatar, deleteCardFromServer} from './api.js';
+import {getInitialCards, getUserInfo, patchUserInfo, postNewCard, patchUserAvatar, deleteCardFromServer, likeCard, unlikeCard} from './api.js';
 const editPopup = document.querySelector('.popup_type_edit');
 const addPopup = document.querySelector('.popup_type_new-card');
 const imagePopup = document.querySelector('.popup_type_image');
@@ -72,7 +72,8 @@ function renderCards(cards, userId) {
         card, 
         userId,
         openImagePopup,
-        handleLikeClick
+        handleLikeClick,
+        openDeleteConfirmationPopup
       )
     );
   });
@@ -104,7 +105,7 @@ popups.forEach(popup => {
   });
 });
 
-function handleSubmitButton(evt, isLoading, options = {}) {
+function switchSubmitButtonLoading(evt, isLoading, options = {}) {
   const button = evt.submitter;
   if (!button) return null;
   if (isLoading && !button.dataset.originalText) {
@@ -120,7 +121,7 @@ function handleSubmitButton(evt, isLoading, options = {}) {
 
 function handleProfileEditSubmit(evt) {
   evt.preventDefault();
-  handleSubmitButton(evt, true);
+  switchSubmitButtonLoading(evt, true);
   const newData = {
     name: nameInput.value,
     about: jobInput.value
@@ -133,14 +134,14 @@ function handleProfileEditSubmit(evt) {
     .catch(err => {
       console.error('Ошибка:', err);
     })
-    .finally(() => handleSubmitButton(evt, false));
+    .finally(() => switchSubmitButtonLoading(evt, false));
 };
 
 popupEditProfile.addEventListener('submit', handleProfileEditSubmit);
 
 function createNewCard(evt) {
   evt.preventDefault();
-  handleSubmitButton(evt, true, { loadingText: 'Создание...' });  
+  switchSubmitButtonLoading(evt, true, { loadingText: 'Создание...' });  
   const newCard = {
     name: newCardName.value.trim(),
     link: newCardLink.value.trim()
@@ -151,10 +152,10 @@ function createNewCard(evt) {
         cardContent, 
         currentUserId, 
         openImagePopup, 
-        (cardId, likeButton) => {
-          const likeCounter = likeButton.closest('.card').querySelector('.card__likes-count');
+        (cardId, likeButton, likeCounter) => {
           return handleLikeClick(cardId, likeButton, likeCounter);
-        }
+        },
+        openDeleteConfirmationPopup
       );
       cardsContainer.prepend(cardElement);
       closePopup(addPopup);
@@ -164,13 +165,12 @@ function createNewCard(evt) {
     .catch(err => {
       console.error('Ошибка:', err);
     })
-    .finally(() => handleSubmitButton(evt, false));
+    .finally(() => switchSubmitButtonLoading(evt, false));
 };
 
 formNewCard.addEventListener('submit', createNewCard);
 
 enableValidation(validationConfig);
-getInitialCards();
 loadAppData();
 
 const setUserInfo = (name, description, avatar) => {
@@ -185,7 +185,7 @@ avatarPopup.addEventListener('submit', (evt) => avatarPopupSubmit(evt));
 
 const avatarPopupSubmit = (evt) => {
   evt.preventDefault();
-  handleSubmitButton(evt, true);
+  switchSubmitButtonLoading(evt, true);
     patchUserAvatar(linkInAvatarForm.value)
     .then(user => {
       profileImage.style.backgroundImage = `url(${user.avatar})`;
@@ -195,7 +195,7 @@ const avatarPopupSubmit = (evt) => {
       showError(err);
     })
     .finally(() => {
-      handleSubmitButton(evt, false);
+      switchSubmitButtonLoading(evt, false);
       avatarForm.reset();
       clearValidation(avatarForm, validationConfig);
     });

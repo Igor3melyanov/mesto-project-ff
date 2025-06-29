@@ -68,18 +68,25 @@ const patchUserAvatar = (userAvatar) => {
 
 function getResponseData(res) {
   if (!res.ok) {
-    return res.json()
-    .then(err => {
-      console.error(`Ошибка ${res.status}:`, err);
-      return Promise.reject(err);
-    })
-    .catch(() => {
-      const error = new Error(`Ошибка  ${res.status}`);
-      console.error(error.message);
-      return Promise.reject(error);
-    });
+    return Promise.reject(`Ошибка: ${res.status}`); 
   }
   return res.json();
 }
 
-export {patchUserAvatar, deleteCardFromServer, postNewCard, patchUserInfo, getUserInfo, getInitialCards, config, getResponseData}
+const likeCard = (cardId) => {
+  return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
+    method: 'PUT',
+    headers: config.headers
+  })
+  .then(getResponseData);
+};
+
+const unlikeCard = (cardId) => {
+  return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
+    method: 'DELETE',
+    headers: config.headers
+  })
+  .then(getResponseData);
+};
+
+export {patchUserAvatar, deleteCardFromServer, postNewCard, patchUserInfo, getUserInfo, getInitialCards, config, getResponseData, likeCard, unlikeCard}
